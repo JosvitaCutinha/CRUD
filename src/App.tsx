@@ -6,11 +6,21 @@ import { supabase } from "./supabase-client";
 
 function App() {
   const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchSession = async () => {
-    const currentSession = await supabase.auth.getSession();
-    console.log(currentSession);
-    setSession(currentSession.data.session);
+    try {
+      const currentSession = await supabase.auth.getSession();
+      console.log("Session data:", currentSession);
+      setSession(currentSession.data.session);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching session:", err);
+      setError("Failed to connect to Supabase. Check your configuration.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -33,7 +43,17 @@ function App() {
 
   return (
     <>
-      {session ? (
+      {loading ? (
+        <div style={{ color: 'white', textAlign: 'center', padding: '2rem' }}>
+          Loading...
+        </div>
+      ) : error ? (
+        <div style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>
+          <h2>Connection Error</h2>
+          <p>{error}</p>
+          <p>Check browser console for more details.</p>
+        </div>
+      ) : session ? (
         <>
           <button onClick={logout}> Log Out</button>
           <TaskManager session={session} />
