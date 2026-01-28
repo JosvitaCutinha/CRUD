@@ -1,69 +1,113 @@
-# React + TypeScript + Vite
+# Task Management CRUD App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A complete task management application built with React, TypeScript, Vite, and Supabase.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🔐 User Authentication (Sign up/Sign in)
+- ✅ CRUD Operations for Tasks
+- 📷 Image Upload for Tasks
+- 🔄 Real-time Updates
+- 🎨 Dark Theme UI
+- 🔒 Row Level Security (RLS)
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: React 19, TypeScript, Vite
+- **Backend**: Supabase (Database, Auth, Storage)
+- **Styling**: CSS (Dark theme)
+- **Deployment**: GitHub Pages
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Setup Instructions
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Clone the Repository
+```bash
+git clone https://github.com/JosvitaCutinha/CRUD.git
+cd CRUD
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Install Dependencies
+```bash
+npm install
 ```
+
+### 3. Environment Setup
+1. Copy `.env` to `.env.local`
+2. Update `.env.local` with your Supabase credentials:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Supabase Setup
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Create a `tasks` table with columns:
+   - `id` (int8, primary key)
+   - `title` (text)
+   - `description` (text)
+   - `email` (text)
+   - `image_url` (text, nullable)
+   - `created_at` (timestamptz)
+
+3. Enable Row Level Security and create policies:
+```sql
+-- Enable RLS
+ALTER TABLE "public"."tasks" ENABLE ROW LEVEL SECURITY;
+
+-- INSERT Policy
+CREATE POLICY "Enable insert for authenticated users based on email" 
+ON "public"."tasks" FOR INSERT TO authenticated 
+WITH CHECK (auth.jwt() ->> 'email' = email);
+
+-- SELECT Policy  
+CREATE POLICY "Enable select for users based on email" 
+ON "public"."tasks" FOR SELECT TO authenticated 
+USING (auth.jwt() ->> 'email' = email);
+
+-- UPDATE Policy
+CREATE POLICY "Enable update for users based on email" 
+ON "public"."tasks" FOR UPDATE TO authenticated 
+USING (auth.jwt() ->> 'email' = email)
+WITH CHECK (auth.jwt() ->> 'email' = email);
+
+-- DELETE Policy
+CREATE POLICY "Enable delete for users based on email" 
+ON "public"."tasks" FOR DELETE TO authenticated 
+USING (auth.jwt() ->> 'email' = email);
+```
+
+4. Create a storage bucket named `tasks-images` for image uploads
+
+### 5. Run the Application
+```bash
+npm run dev
+```
+
+Visit `http://localhost:5173` to see the app.
+
+## Deployment
+
+### GitHub Pages
+```bash
+npm run deploy
+```
+
+### Other Platforms
+- **Vercel**: Connect your GitHub repo
+- **Netlify**: Drag and drop the `dist` folder after `npm run build`
+
+## Live Demo
+
+🚀 **Live App**: [https://josvitacutinha.github.io/CRUD](https://josvitacutinha.github.io/CRUD)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT License - feel free to use this project for learning and development!

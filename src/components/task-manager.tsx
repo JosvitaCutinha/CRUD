@@ -21,6 +21,7 @@ function TaskManager({ session }: { session: Session }) {
     const { error, data } = await supabase
       .from("tasks")
       .select("*")
+      .eq("email", session.user.email)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -74,27 +75,43 @@ function TaskManager({ session }: { session: Session }) {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    let imageUrl: string | null = null;
+    console.log("Submitting task with email:", session.user.email);
+
+    let imageUrl: string = "";  // Default to empty string instead of null
     if (taskImage) {
-      imageUrl = await uploadImage(taskImage);
+      const uploadedUrl = await uploadImage(taskImage);
+      imageUrl = uploadedUrl || "";  // Fallback to empty string if upload fails
     }
 
-    const { error } = await supabase
+    const taskData = { 
+      ...newTask, 
+      email: session.user.email, 
+      image_url: imageUrl  // This will never be null now
+    };
+    
+    console.log("Task data being inserted:", taskData);
+
+    const { error, data } = await supabase
       .from("tasks")
-      .insert({ ...newTask, email: session.user.email, image_url: imageUrl })
+      .insert(taskData)
       .select()
       .single();
 
     if (error) {
-      console.error("Error adding task: ", error.message);
+      console.error("Error adding task: ", error);
+      alert(`Error adding task: ${error.message}`);
       return;
     }
 
+    console.log("Task added successfully:", data);
     setNewTask({ title: "", description: "" });
     setTaskImage(null);
     // Reset the file input
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
+    
+    // Refresh tasks
+    fetchTasks();
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
